@@ -3,9 +3,15 @@ package br.com.alura.screenmatchv2.principal;
 import br.com.alura.screenmatchv2.model.DadosEpisodio;
 import br.com.alura.screenmatchv2.model.DadosSerie;
 import br.com.alura.screenmatchv2.model.DadosTemporada;
+import br.com.alura.screenmatchv2.model.Episodio;
 import br.com.alura.screenmatchv2.service.ConsumoApi;
 import br.com.alura.screenmatchv2.service.ConverteDados;
+import org.springframework.cglib.core.Local;
 
+import javax.swing.text.DateFormatter;
+import java.text.DateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,12 +42,35 @@ public class Principal {
         temporadas.forEach(t -> t.episodios().forEach(e -> System.out.println(e.titulo())));
         List<DadosEpisodio> dadosEpisodios= temporadas.stream()
                 .flatMap(t -> t.episodios().stream())
-                .collect(Collectors.toUnmodifiableList());
+                .collect(Collectors.toList());
 
         dadosEpisodios.stream()
                 .filter(e -> !e.avaliacao().equalsIgnoreCase("N/A"))
                 .sorted(Comparator.comparing(DadosEpisodio::avaliacao).reversed())
                 .limit(5)
                 .forEach(System.out::println);
+
+        List<Episodio> episodios = temporadas.stream()
+                .flatMap(t -> t.episodios().stream()
+                        .map(d -> new Episodio(t.numero(), d))
+                        ).collect(Collectors.toList());
+
+
+        episodios.forEach(System.out::println);
+
+        System.out.println("Você quer buscar os episódios lançados a partir de qual ano?");
+        var ano = leitura.nextInt();
+        leitura.nextLine();
+
+
+        LocalDate dataBusca = LocalDate.of(ano, 1, 1);
+        DateTimeFormatter formatador = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        episodios.stream()
+                .filter(e -> e.getAnoLancamento() != null && e.getAnoLancamento().isAfter(dataBusca))
+                .forEach(e -> System.out.println(
+                        "Temporada: " + e.getTemporada() +
+                        " Episódio:  " + e.getTitulo() +
+                        " Data de lançamento: " + e.getAnoLancamento().format(formatador)
+                ));
     }
 }
